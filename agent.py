@@ -5,6 +5,9 @@ from pathlib import Path
 from neural import MarioNet
 from collections import deque
 
+#定义函数判断使用torch的不同后端，cuda|mps|cpu
+
+
 
 class Mario:
     def __init__(self, state_dim, action_dim, save_dir, checkpoint=None):
@@ -23,22 +26,34 @@ class Mario:
         self.learn_every = 3   # no. of experiences between updates to Q_online
         self.sync_every = 1e4   # no. of experiences between Q_target & Q_online sync
 
-        self.save_every = 5e5   # no. of experiences between saving Mario Net
+        self.save_every = 10000  # no. of experiences between saving Mario Net
         self.save_dir = save_dir
 
-        self.use_cuda = torch.cuda.is_available()
+        self.use_cuda = torch.backends.mps.is_available() or torch.cuda.is_available()
+
 
         # Mario's DNN to predict the most optimal action - we implement this in the Learn section
         self.net = MarioNet(self.state_dim, self.action_dim).float()
         if self.use_cuda:
-            self.net = self.net.to(device='cuda')
+            device = torch.device(self._get_device())
+            self.net = self.net.to(device=device)
+            print(device)
+            
         if checkpoint:
             self.load(checkpoint)
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.00025)
         self.loss_fn = torch.nn.SmoothL1Loss()
 
-
+    def _get_device(self):
+        if self.use_cuda:
+            if torch.backends.mps.is_available():
+                return "mps"
+            elif torch.cuda.is_available():
+                return  "mps"
+            else:
+                return "cpu"
+        
     def act(self, state):
         """
         Given a state, choose an epsilon-greedy action and update value of step.
@@ -54,7 +69,8 @@ class Mario:
 
         # EXPLOIT
         else:
-            state = torch.FloatTensor(state).cuda() if self.use_cuda else torch.FloatTensor(state)
+            state_tensor = torch.from_numpy(np.array(state)).float()
+            state = state_tensor.to(device="mps") if self.use_cuda else state_tensor
             state = state.unsqueeze(0)
             action_values = self.net(state, model='online')
             action_idx = torch.argmax(action_values, axis=1).item()
@@ -67,6 +83,16 @@ class Mario:
         self.curr_step += 1
         return action_idx
 
+    def _to_tensor(self,data, dtype=torch.float32):
+        device = self._get_device()
+        data = np.array(data)
+        tensor = torch.from_numpy(data)
+        if dtype is not None:
+            tensor = tensor.type(dtype)
+        if device is not None:
+            tensor = tensor.to(device)
+        return tensor
+    
     def cache(self, state, next_state, action, reward, done):
         """
         Store the experience to self.memory (replay buffer)
@@ -78,12 +104,36 @@ class Mario:
         reward (float),
         done(bool))
         """
-        state = torch.FloatTensor(state).cuda() if self.use_cuda else torch.FloatTensor(state)
-        next_state = torch.FloatTensor(next_state).cuda() if self.use_cuda else torch.FloatTensor(next_state)
-        action = torch.LongTensor([action]).cuda() if self.use_cuda else torch.LongTensor([action])
-        reward = torch.DoubleTensor([reward]).cuda() if self.use_cuda else torch.DoubleTensor([reward])
-        done = torch.BoolTensor([done]).cuda() if self.use_cuda else torch.BoolTensor([done])
+        # Use numpy to opt// old impl
+        # state = torch.FloatTensor(state).to(device= "mps") if self.use_cuda else torch.FloatTensor(state)
+        # next_state = torch.FloatTensor(next_state).to(device= "mps")if self.use_cuda else torch.FloatTensor(next_state)
+        # action = torch.LongTensor([action]).to(device= "mps")if self.use_cuda else torch.LongTensor([action])
+        # reward = torch.FloatTensor([reward]).to(device= "mps")if self.use_cuda else torch.DoubleTensor([reward])
+        # done = torch.BoolTensor([done]).to(device= "mps")if self.use_cuda else torch.BoolTensor([done])
 
+        
+
+        state = self._to_tensor(state)
+        next_state = self._to_tensor(next_state )
+        action = self._to_tensor(action, dtype=torch.long)
+        reward = self._to_tensor(reward)
+        done = self._to_tensor(done)
+ 
+        # state_tensor = torch.from_numpy(np.array(state))
+        # state_tensor= state_tensor.float()
+        # state = state_tensor.to(device="mps") if self.use_cuda else state_tensor
+        # next_state = np.array(next_state)
+        # next_state = torch.from_numpy(next_state).float().to(device="mps") if self.use_cuda else torch.from_numpy(next_state)
+        #
+        # action = np.array(action)
+        # action = torch.from_numpy(action).to(device="mps") if self.use_cuda else torch.from_numpy(action)
+        #
+        # reward = np.array(reward)
+        # reward = torch.from_numpy(reward).float().to(device="mps") if self.use_cuda else reward
+        #
+        # done = np.array(done)
+        # done = torch.from_numpy(done).to(device="mps") if self.use_cuda else torch.from_numpy(done)
+        
         self.memory.append( (state, next_state, action, reward, done,) )
 
 
@@ -165,7 +215,8 @@ class Mario:
         if not load_path.exists():
             raise ValueError(f"{load_path} does not exist")
 
-        ckp = torch.load(load_path, map_location=('cuda' if self.use_cuda else 'cpu'))
+        ckp = torch.load(load_path, map_location=(self._get_device()))
+        # ckp = torch.load(load_path, map_location=('cuda' if self.use_cuda else 'cpu'))
         exploration_rate = ckp.get('exploration_rate')
         state_dict = ckp.get('model')
 

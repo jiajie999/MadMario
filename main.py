@@ -21,8 +21,12 @@ env = gym_super_mario_bros.make('SuperMarioBros-1-1-v0')
 #   1. jump right
 env = JoypadSpace(
     env,
-    [['right'],
-    ['right', 'A']]
+    [
+        ['right'],
+        ['right', 'A'],
+        # ['right', 'B'],
+        # ['down']
+     ]
 )
 
 # Apply Wrappers to environment
@@ -34,15 +38,20 @@ env = FrameStack(env, num_stack=4)
 
 env.reset()
 
-save_dir = Path('checkpoints') / datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
-save_dir.mkdir(parents=True)
+# save_dir = Path('checkpoints') / datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
+# print(save_dir)
+# save_dir.mkdir(parents=True)
+# checkpoint = None # Path('checkpoints/2020-10-21T18-25-27/mario.chkpt')
 
-checkpoint = None # Path('checkpoints/2020-10-21T18-25-27/mario.chkpt')
-mario = Mario(state_dim=(4, 84, 84), action_dim=env.action_space.n, save_dir=save_dir, checkpoint=checkpoint)
+
+save_dir = Path("checkpoints/")
+checkpoint = Path("checkpoints/2023-04-21T17-54-51")/'mario_net_3.chkpt'
+
+mario = Mario(state_dim=(4, 84, 84), action_dim=env.action_space.n, save_dir=save_dir, checkpoint=None)
 
 logger = MetricLogger(save_dir)
 
-episodes = 40000
+episodes = 380
 
 ### for Loop that train the model num_episodes times by playing the game
 for e in range(episodes):
@@ -53,7 +62,7 @@ for e in range(episodes):
     while True:
 
         # 3. Show environment (the visual) [WIP]
-        # env.render()
+        env.render()
 
         # 4. Run agent on the state
         action = mario.act(state)
@@ -85,3 +94,4 @@ for e in range(episodes):
             epsilon=mario.exploration_rate,
             step=mario.curr_step
         )
+ 
