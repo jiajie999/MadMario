@@ -1,0 +1,16 @@
+#cloudpickle==2.0.0
+future==0.18.2
+#gym[all]==0.21.0
+gym-super-mario-bros==7.3.2
+nes-py==8.1.8
+numpy==1.21.2
+matplotlib==3.4.3
+opencv-python==4.5.3.56
+pillow==8.3.2
+#pyglet==1.5.21
+scikit-image==0.18.3
+scipy==1.7.1
+
+tqdm==4.62.3
+
+# sudo apt-get install xserver-xorg libglu1-mesa-dev freeglut3-dev mesa-common-dev libxmu-dev libxi-dev

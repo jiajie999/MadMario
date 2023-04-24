@@ -45,13 +45,14 @@ env.reset()
 
 
 save_dir = Path("checkpoints/")
-checkpoint = Path("checkpoints/2023-04-21T17-54-51")/'mario_net_3.chkpt'
+save_dir.mkdir(parents=True,exist_ok=True)
+checkpoint = Path("checkpoints")/'mario_net_5.chkpt'
 
-mario = Mario(state_dim=(4, 84, 84), action_dim=env.action_space.n, save_dir=save_dir, checkpoint=None)
+mario = Mario(state_dim=(4, 84, 84), action_dim=env.action_space.n, save_dir=save_dir, checkpoint=checkpoint)
 
 logger = MetricLogger(save_dir)
 
-episodes = 380
+episodes = 10000
 
 ### for Loop that train the model num_episodes times by playing the game
 for e in range(episodes):

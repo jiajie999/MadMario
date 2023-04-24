@@ -5,7 +5,6 @@ from pathlib import Path
 from neural import MarioNet
 from collections import deque
 
-#定义函数判断使用torch的不同后端，cuda|mps|cpu
 
 
 
@@ -45,14 +44,17 @@ class Mario:
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.00025)
         self.loss_fn = torch.nn.SmoothL1Loss()
 
+    # 定义函数判断使用torch的不同后端，cuda|mps|cpu
     def _get_device(self):
-        if self.use_cuda:
-            if torch.backends.mps.is_available():
-                return "mps"
-            elif torch.cuda.is_available():
-                return  "mps"
-            else:
-                return "cpu"
+        dev="cpu"
+        # if self.use_cuda:
+        #     if torch.backends.mps.is_available():
+        #         dev= "mps"
+        #     elif torch.cuda.is_available():
+        #         dev= "cuda"
+        # # print("Using devcie ======================= "+dev)
+        #
+        return dev
         
     def act(self, state):
         """
@@ -70,7 +72,7 @@ class Mario:
         # EXPLOIT
         else:
             state_tensor = torch.from_numpy(np.array(state)).float()
-            state = state_tensor.to(device="mps") if self.use_cuda else state_tensor
+            state = state_tensor.to(device=self._get_device()) if self.use_cuda else state_tensor
             state = state.unsqueeze(0)
             action_values = self.net(state, model='online')
             action_idx = torch.argmax(action_values, axis=1).item()
@@ -105,11 +107,12 @@ class Mario:
         done(bool))
         """
         # Use numpy to opt// old impl
-        # state = torch.FloatTensor(state).to(device= "mps") if self.use_cuda else torch.FloatTensor(state)
-        # next_state = torch.FloatTensor(next_state).to(device= "mps")if self.use_cuda else torch.FloatTensor(next_state)
-        # action = torch.LongTensor([action]).to(device= "mps")if self.use_cuda else torch.LongTensor([action])
-        # reward = torch.FloatTensor([reward]).to(device= "mps")if self.use_cuda else torch.DoubleTensor([reward])
-        # done = torch.BoolTensor([done]).to(device= "mps")if self.use_cuda else torch.BoolTensor([done])
+        
+        # state = torch.FloatTensor(state).to(device= "cuda") if self.use_cuda else torch.FloatTensor(state)
+        # next_state = torch.FloatTensor(next_state).to(device= "cuda")if self.use_cuda else torch.FloatTensor(next_state)
+        # action = torch.LongTensor([action]).to(device= "cuda")if self.use_cuda else torch.LongTensor([action])
+        # reward = torch.FloatTensor([reward]).to(device= "cuda")if self.use_cuda else torch.DoubleTensor([reward])
+        # done = torch.BoolTensor([done]).to(device= "cuda")if self.use_cuda else torch.BoolTensor([done])
 
         
 
