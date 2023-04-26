@@ -4,6 +4,7 @@ import collections
 
 import gym
 import numpy as np
+import retro
 from stable_baselines3.common.type_aliases import GymStepReturn
 
 
@@ -25,13 +26,18 @@ class MaxSkipEnvWithRewardCoins(gym.Wrapper):
         self.last_coins = 0
         self.last_lives = 2
         self.custom_reward = 0
+        self.xscrollLo=0
 
     def my_reward(self, reward, info):
     
         coins = info['coins']
         lives = info['lives']
-        if coins > self.last_coins:
-            reward += (coins - self.last_coins) * 100
+        xscrollLo=info['xscrollLo']
+        if xscrollLo>self.xscrollLo:
+            reward+=xscrollLo*10
+        # if coins > self.last_coins:
+        #     reward += (coins - self.last_coins)
+        
         # if self.last_lives > lives:
         #     reward -= (self.last_lives - lives) * 10
     
@@ -68,4 +74,55 @@ class MaxSkipEnvWithRewardCoins(gym.Wrapper):
 
         return max_frame, total_reward, done, info
 
- 
+from gym import Env
+from gym.spaces import Box, MultiBinary
+
+import cv2
+class MarioImageWrapper(Env):
+    def __init__(self):
+        super().__init__()
+        self.observation_space = Box(low=0, high=255, shape=(84, 84, 1), dtype=np.uint8)
+        self.action_space = MultiBinary(36)
+        self.game = retro.make('SuperMarioBros-Nes', 'Level1-1', use_restricted_actions=retro.Actions.FILTERED)
+        self.score = 0
+    
+    def step(self, action):
+        obs, reward, done, info = self.game.step(action)
+        obs = self.preprocess(obs)
+        
+        # Preprocess frame from game
+        frame_delta = obs
+        #         - self.previous_frame
+        #         self.previous_frame = obs
+        
+        # Shape reward
+        
+        reward = info['xscrollLo'] - self.score
+        self.score = info['xscrollLo']
+        
+        return frame_delta, reward, done, info
+    
+    def render(self, *args, **kwargs):
+        self.game.render()
+    
+    def reset(self):
+        self.previous_frame = np.zeros(self.game.observation_space.shape)
+        
+        # Frame delta
+        obs = self.game.reset()
+        obs = self.preprocess(obs)
+        self.previous_frame = obs
+        
+        # Create initial variables
+        self.score = 0
+        
+        return obs
+    
+    def preprocess(self, observation):
+        gray = cv2.cvtColor(observation, cv2.COLOR_BGR2GRAY)
+        resize = cv2.resize(gray, (84, 84), interpolation=cv2.INTER_CUBIC)
+        state = np.reshape(resize, (84, 84, 1))
+        return state
+    
+    def close(self):
+        self.game.close()

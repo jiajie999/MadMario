@@ -3,6 +3,7 @@ import os
 import cv2
 import numpy as np
 import retro
+import torch
 from gym import ObservationWrapper, Wrapper, Env
 from gym.spaces import Box, MultiBinary
 from gym.wrappers import FrameStack, GrayScaleObservation, TransformObservation, Monitor
@@ -98,6 +99,15 @@ def checkRewardFunc():
     #     return 0.1 * (info['screen_x'] - info['last_screen_x'])
 
 
-checkpoint_callback = CheckpointCallback(save_freq=10000, save_path='./models/',
+checkpoint_callback = CheckpointCallback(save_freq=50000, save_path='./models/',
                                          name_prefix='ppo_')
 
+
+def get_device():
+    dev = "cpu"
+    if torch.backends.mps.is_available():
+        dev= "mps"
+    elif torch.cuda.is_available():
+        dev= "cuda"
+    print("Using devcie ======================= "+dev)
+    return dev
