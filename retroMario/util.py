@@ -84,8 +84,6 @@ def convert(env):
 def initLogDir(logs = 'logs/',save_dir = 'models'):
     
     os.makedirs(logs, exist_ok=True)
-
-
     os.makedirs(save_dir, exist_ok=True)
 
 # 查看retro中定义的reward函数,导入retro.data.Integrations,查看"SuperMarioBros-Nes"
@@ -111,3 +109,60 @@ def get_device():
         dev= "cuda"
     print("Using devcie ======================= "+dev)
     return dev
+
+
+"""
+multi binary
+{
+    "Nes": {
+        "lib": "fceumm",
+        "ext": ["nes"],
+        "keybinds": ["Z", null, "TAB", "ENTER", "UP", "DOWN", "LEFT", "RIGHT", "X"],
+        "buttons": ["B", null, "SELECT", "START", "UP", "DOWN", "LEFT", "RIGHT", "A"],
+        "actions": [
+            [[], ["UP"], ["DOWN"]],
+            [[], ["LEFT"], ["RIGHT"]],
+            [[], ["A"], ["B"], ["A", "B"]]
+        ]
+    }
+}
+
+Discrete(36)
+[]
+['UP']
+['DOWN']
+['LEFT']
+['UP', 'LEFT']
+['DOWN', 'LEFT']
+6 ['RIGHT']
+['UP', 'RIGHT']
+['DOWN', 'RIGHT']
+['B']
+['B', 'UP']
+['B', 'DOWN']
+['B', 'LEFT']
+['B', 'UP', 'LEFT']
+['B', 'DOWN', 'LEFT']
+['B', 'RIGHT']
+['B', 'UP', 'RIGHT']
+['B', 'DOWN', 'RIGHT']
+['A']
+['UP', 'A']
+['DOWN', 'A']
+['LEFT', 'A']
+['UP', 'LEFT', 'A']
+['DOWN', 'LEFT', 'A']
+24 ['RIGHT', 'A']
+['UP', 'RIGHT', 'A']
+['DOWN', 'RIGHT', 'A']
+['B', 'A']
+['B', 'UP', 'A']
+['B', 'DOWN', 'A']
+['B', 'LEFT', 'A']
+['B', 'UP', 'LEFT', 'A']
+['B', 'DOWN', 'LEFT', 'A']
+['B', 'RIGHT', 'A']
+['B', 'UP', 'RIGHT', 'A']
+['B', 'DOWN', 'RIGHT', 'A']
+
+"""

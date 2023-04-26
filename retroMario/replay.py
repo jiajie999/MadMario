@@ -27,19 +27,20 @@ model = PPO('MlpPolicy', env, verbose=1, device='mps', learning_rate=hp.LEARNING
 
 # model.learn(total_timesteps=50000,  callback=[checkpoint_callback])
 
-# model.load(Path(save_dir) / 'trial_12_best_model.zip')
-model.load('trial_14_best_model.zip')
-# model.load('m1_best_model.zip')
+# model.load(Path(save_dir) / 'trial_1_best_model.zip')
+model.load('trial_6_best_model.zip')
+# model.load('ppo__97838_steps.zip')
+
 obs = env.reset()
 while True:
     action, _states = model.predict(obs)
     obs, rewards, dones, info = env.step(action)
     
-    if rewards > 10 and info['xscrollLo']>250:
+    if info['xscrollLo']>600:
         print(info)
         print(rewards)
         print("=============")
-        env.render()
+    env.render()
     if dones:
         obs = env.reset()
  

@@ -15,7 +15,7 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, VecFrameStack
 
 import hyperparams as hp
-from retroMario.mario_custom_wrapper import MaxSkipEnvWithRewardCoins
+from retroMario.mario_custom_wrapper import MaxSkipEnvWithRewardCoins, MarioImageWrapper
 from retroMario.util import initLogDir, checkpoint_callback, get_device
 
 logs = 'logs/'
@@ -46,16 +46,9 @@ def optimize_agent(trial):
     
     # try:
         model_params = optimize_ppo(trial)
-        
         now=datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
+        env = MarioImageWrapper()
         env = Monitor(env, logs+f"/{now}")
-
-        # Convert to grayscale and warp frames to 84x84 (default)
-        env = WarpFrame(env)
-        env = FrameStack(env, num_stack=hp.FRAME_STACK)
-
-        # Evaluate every kth frame and repeat action
-        env = MaxSkipEnvWithRewardCoins(env, skip=hp.FRAME_SKIP)
         
         env = DummyVecEnv([lambda: env])
         env = VecFrameStack(env, 4, channels_order='last')
@@ -65,7 +58,7 @@ def optimize_agent(trial):
         # model = PPO('MlpPolicy', env, verbose=1, device=device , tensorboard_log=logs,**model_params)
         model = PPO('CnnPolicy', env, verbose=1, device=device , tensorboard_log=logs,**model_params)
 
-        model.learn(total_timesteps=50000,callback=[checkpoint_callback])
+        model.learn(total_timesteps=500000,callback=[checkpoint_callback])
         mean_reward, _ = evaluate_policy(model, env, n_eval_episodes=20)
         env.close()
 
@@ -86,7 +79,14 @@ if __name__ == '__main__':
     study.optimize(optimize_agent, n_trials=5, n_jobs=1, show_progress_bar=True)
     print(f"Best value: {study.best_value} (params: {study.best_params})")
     
-    """
-     Trial 24 finished with value: 603.0 and parameters: {'n_steps': 5167, 'gamma': 0.956004227649948, 'learning_rate': 4.0201928086816556e-05, 'clip_range': 0.141418947094912, 'gae_lambda': 0.960557642729578}. Best is trial 4 with value: 608.0.
+"""
+mlppolicy
     
-    """
+Trial 24 finished with value: 603.0 and parameters: {'n_steps': 5167, 'gamma': 0.956004227649948, 'learning_rate': 4.0201928086816556e-05, 'clip_range': 0.141418947094912, 'gae_lambda': 0.960557642729578}. Best is trial 4 with value: 608.0.
+
+cnn
+Trial 4 finished with value: Best value: 202.0 (params: {'clip_range': 0.255431342753935, 'gae_lambda': 0.9871945100046138, 'gamma': 0.9956004583546554, 'learning_rate': 5.038530176409918e-05, 'n_steps': 5354})
+
+
+
+"""
